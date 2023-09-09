@@ -53,7 +53,7 @@ void touchCalculationDegrees()
       //Serial.print(":");
       //Serial.println(currentReadings[i]);
    
-      if (currentReadings[i] > threshold) 
+      if (currentReadings[i] > Touchthreshold) 
       {
         if (largestIndex == -1 || currentReadings[i] > currentReadings[largestIndex]) 
         {

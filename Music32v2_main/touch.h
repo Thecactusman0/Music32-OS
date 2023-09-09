@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #define numberOfSegments 6
 #define numberOfSamples 5
-#define threshold 7000 //When the the clickwheel is touched
+#define Touchthreshold 7000 //When the the clickwheel is touched
 #define offsetDegrees -90
 #define touchDelay 150
 

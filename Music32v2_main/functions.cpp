@@ -4,7 +4,125 @@ int menu;
 int maxItem;
 int lastOn = 0;
 char menu0[3][10] = { "Music", "Link", "Settings" };
+
+bool menuPressed; //stop froms button being registered as pressed over and over when held
+bool FFPressed;
+bool RWPressed;
+bool PPPressed;
+bool selectPressed;
+bool refreshMenu;
+bool refreshSelect;
+bool drawn;
+
 TFT_eSPI tft = TFT_eSPI();  // Invoke custom library
+
+void menuChangeCheck()
+{
+  if(menuPressed && selectPressed == false)
+  {
+    switch(menu)
+    {
+      case 1:
+      menu = 0; //If on music screen and menu pressed go to homescreen
+      drawn = 0;
+      break;
+    }
+    
+  }
+
+  if(selectPressed && menuPressed == false)
+  {
+    switch(menu)
+    {
+      case 0:
+      switch(item)
+      {
+        case 0:
+        menu = 1; //if select pressed on music item go to music menu
+        drawn = 0;
+        break;
+        //Add more homescreen menus here
+      }
+      break;
+    }
+    
+  }
+
+}
+
+void buttonStateCheck()
+{
+  if(digitalRead(menuButtonPin) == 0)
+  {
+    menuPressed = true;
+    if(refreshMenu == false)
+    {
+      tft.fillScreen(bgColour);
+      refreshMenu = true;
+      drawn = 0;
+    }
+  }else
+  {
+    menuPressed = false;
+    refreshMenu = false;
+  }
+  
+  if(digitalRead(FFButtonPin) == 0)
+  {
+    FFPressed = true;
+    drawn = 0;
+  }else
+  {
+    FFPressed = false;
+  }
+
+  if(digitalRead(RWButtonPin) == 0)
+  {
+    RWPressed = true;
+
+  }else
+  {
+    RWPressed = false;
+  }
+
+  if(digitalRead(PPButtonPin) == 0)
+  {
+    PPPressed = true;
+
+  }else
+  {
+    PPPressed = false;
+  }
+
+  if(digitalRead(selectButtonPin) == 0)
+  {
+    selectPressed = true;
+    if(refreshSelect == false)
+    {
+      drawn = 0;
+      tft.fillScreen(bgColour);
+      refreshSelect = true;
+    }
+  }else
+  {
+    selectPressed = false;
+    refreshSelect = false;
+  }
+  
+  
+  /*tft.setCursor(10,20);
+  tft.print(menuPressed);
+  tft.setCursor(10,40);
+  tft.print(RWPressed);
+  tft.setCursor(10,60);
+  tft.print(FFPressed);
+  tft.setCursor(30,20);
+  tft.print(PPPressed);
+  tft.setCursor(30,40);
+  tft.print(selectPressed);*/
+
+  
+}
 
 void itemIncrement()
 {
@@ -64,10 +182,12 @@ void itemIncrement()
       {
         item++;
         lastOn = currentInterpolatedSegment();
+        drawn = 0;
       } else if (currentInterpolatedSegment() < lastOn) //Anticlockwise
       {
         item--;
         lastOn = currentInterpolatedSegment();
+        drawn = 0;
       }
     }
   }else
