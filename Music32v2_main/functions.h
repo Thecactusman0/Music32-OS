@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>  // Hardware-specific library
+#include "touch.h"
 
 #define bgColour 0x0000 //background colour
 #define hlColour 0xFFFF //colour of highlighted/current selected item
@@ -21,5 +22,6 @@ extern char menu0[3][10];
 
 void drawUnselectedText(int x, int y, char text[]);
 void drawSelectedText(int x, int y, char text[]);
+void itemIncrement();
 
 #endif

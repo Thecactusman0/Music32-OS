@@ -39,12 +39,15 @@ void touchCalculationDegrees()
   int largestIndex = -1;
   int secondLargestIndex = -1;
   unsigned long currentTime = millis();
+  unsigned long timeNow;
   unsigned long deltaTime = currentTime - previousTime;
     
-    
-
-  for (int i = 0; i < numberOfSegments; i++) 
+  if(millis()  >= timeNow + touchDelay)
   {
+    timeNow += touchDelay;
+  
+    for (int i = 0; i < numberOfSegments; i++) 
+    {
       currentReadings[i] = touchRead(pins[i]) - initialReadings[i];
       //Serial.print(i);
       //Serial.print(":");
@@ -62,57 +65,57 @@ void touchCalculationDegrees()
         }
       }
     
-  }
-  if (secondLargestIndex == -1 && largestIndex != -1) //only one value
-  {
-    degrees = largestIndex * 60.0;
-    degrees = applyOffset(degrees,-20);
-    
-  } else if (largestIndex != -1 && secondLargestIndex != -1)
-  { 
-    if(isDecreasingAboveRate(currentReadings[largestIndex],previousReadings[largestIndex],rate,deltaTime) && isDecreasingAboveRate(currentReadings[secondLargestIndex],previousReadings[secondLargestIndex],rate,deltaTime))
+    }
+    if (secondLargestIndex == -1 && largestIndex != -1) //only one value
     {
-      degrees = -1;
+      degrees = largestIndex * 60.0;
+      degrees = applyOffset(degrees,-20);
+    
+    }else if (largestIndex != -1 && secondLargestIndex != -1)
+    { 
+      if(isDecreasingAboveRate(currentReadings[largestIndex],previousReadings[largestIndex],rate,deltaTime) && isDecreasingAboveRate(currentReadings[secondLargestIndex],previousReadings[secondLargestIndex],rate,deltaTime))
+      {
+        degrees = -1;
+      }else
+      {
+        int sum = currentReadings[largestIndex]+currentReadings[secondLargestIndex];
+        sum = sum/1000;
+        int sum2 = currentReadings[largestIndex]/1000;
+        degrees = ((float)sum2/(float)sum)*60.0;
+        if(largestIndex < secondLargestIndex || largestIndex == 5 && secondLargestIndex == 0)
+        {
+          int i = degrees - 30;
+          i = i*2;
+          degrees = degrees - i;
+        }
+        if(secondLargestIndex == 5 && largestIndex == 0)
+        {
+          degrees = 30 - degrees;
+          degrees = degrees + 30;  
+        }
+        if (largestIndex > secondLargestIndex) 
+        {
+          degrees = degrees+(secondLargestIndex*60);  
+        } else 
+        {
+          degrees = degrees+(largestIndex*60);    
+        }
+        if(secondLargestIndex == 5 && largestIndex == 0 || secondLargestIndex == 0 && largestIndex == 5)
+        {
+          degrees = degrees + 300; 
+        }
+          degrees = applyOffset(degrees,-20);
+      }  
     }else
     {
-      int sum = currentReadings[largestIndex]+currentReadings[secondLargestIndex];
-      sum = sum/1000;
-      int sum2 = currentReadings[largestIndex]/1000;
-      degrees = ((float)sum2/(float)sum)*60.0;
-      if(largestIndex < secondLargestIndex || largestIndex == 5 && secondLargestIndex == 0)
-      {
-        int i = degrees - 30;
-        i = i*2;
-        degrees = degrees - i;
-      }
-      if(secondLargestIndex == 5 && largestIndex == 0)
-      {
-        degrees = 30 - degrees;
-        degrees = degrees + 30;  
-      }
-      if (largestIndex > secondLargestIndex) 
-      {
-        degrees = degrees+(secondLargestIndex*60);  
-      } else 
-      {
-        degrees = degrees+(largestIndex*60);    
-      }
-      if(secondLargestIndex == 5 && largestIndex == 0 || secondLargestIndex == 0 && largestIndex == 5)
-      {
-        degrees = degrees + 300; 
-      }
-        degrees = applyOffset(degrees,-20);
-      }
-  }else
-  {
-    degrees = -1;
-  }
+      degrees = -1;
+    }
     
-  for (int i = 0; i < numberOfSegments; i++) 
-  {
-     previousReadings[i] = currentReadings[i];
+    for (int i = 0; i < numberOfSegments; i++) 
+    {
+      previousReadings[i] = currentReadings[i];
+    }
   }
-  
   //Serial.print("Degrees: ");
   //Serial.println(degrees);
 }

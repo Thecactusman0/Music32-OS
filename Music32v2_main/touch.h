@@ -6,6 +6,7 @@
 #define numberOfSamples 5
 #define threshold 7000 //When the the clickwheel is touched
 #define offsetDegrees -90
+#define touchDelay 150
 
 extern long int initialReadings[numberOfSegments];
 extern long int previousReadings[numberOfSegments];
