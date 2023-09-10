@@ -3,22 +3,38 @@
 #include "audio.h"
 #include "ES8327.h"
 
+#define maxFileDisplay 10
 ES8327 codec(Wire,8,0x18);//wire object,hp_int, address
+//SPIClass spi = SPIClass(VSPI);
 
+bool sdFailed;
+
+File root;
+File file;
+int fileNumber;
+int selectedFileNumber;
 
 void setup() 
 {
-  auto config = i2s.defaultConfig(TX_MODE);
-  config.pin_mck = 46; 
-  config.pin_bck = 45; 
-  config.pin_data = 48;
-  config.pin_ws = 47; 
-  i2s.begin(config);
 
-  SPI.begin(37,42,36); 
-  player.begin(0,false);
-  player.setBufferSize(1024);
+  delay(100);
+  calibrateClickwheel();
+  previousTime = millis(); // Initialize the previous time
+  pinMode(menuButtonPin,INPUT);
+  pinMode(FFButtonPin,INPUT);
+  pinMode(RWButtonPin,INPUT);
+  pinMode(PPButtonPin,INPUT);
+  pinMode(selectButtonPin,INPUT);
+  pinMode(40,OUTPUT); //Set 25% brightness for filming
+  analogWrite(40,64);
   
+
+  SPI.begin(sckPin,misoPin,mosiPin);
+  if (!SD.begin(SDCSPin)) 
+  {
+  sdFailed = true;
+  }
+  delay(500);
   tft.init();
   tft.setRotation(0);
   tft.fillScreen(bgColour);
@@ -30,26 +46,24 @@ void setup()
     while (1) {}
   }
   codec.setWordLength(16);
-  calibrateClickwheel();
-  previousTime = millis(); // Initialize the previous time
-  pinMode(menuButtonPin,INPUT);
-  pinMode(FFButtonPin,INPUT);
-  pinMode(RWButtonPin,INPUT);
-  pinMode(PPButtonPin,INPUT);
-  pinMode(selectButtonPin,INPUT);
-  pinMode(40,OUTPUT); //Set 25% brightness for filming
-  analogWrite(40,64);
+  
+  if(sdFailed == true)
+  {
+    tft.loadFont(AA_FONT_LARGE);
+    drawSelectedText(xMenuOrigin,10,"SD fail");
+  }
+ 
 }
 
 void loop() 
 {
- buttonStateCheck();
- menuChangeCheck();
- touchCalculationDegrees();
- itemIncrement();
- drawMenu();
- player.copy();
+  buttonStateCheck();
+  menuChangeCheck();
+  touchCalculationDegrees();
+  itemIncrement();
+  drawMenu(); 
 }
+
 
 
 
@@ -77,16 +91,44 @@ void drawMenu()
       tft.unloadFont(); // Remove the font to recover memory used
     break;
     case 1:
-      player.play();
-      tft.setCursor(10,10);
-      tft.print(source.toStr());
-      if(FFPressed)
+      maxItem = maxFileDisplay;
+      tft.loadFont(AA_FONT_SMALL);
+      root = SD.open("/");
+      file = root.openNextFile();
+      tft.setTextColor(hlColour,bgColour);
+      fileNumber = 0;
+      while(fileNumber < maxFileDisplay)
       {
-        player.next();
+          if(!file)
+          {
+            maxItem = fileNumber;
+            break;
+          }
+
+          tft.setCursor(xMenuOrigin,yMenuOrigin+(textSeperationSmall*fileNumber));
+          if(fileNumber == item)
+          {
+            tft.setTextColor(hlColour,bgColour);
+            tft.println(file.name());
+            selectedFileNumber = fileNumber;
+          }else
+          {
+            tft.setTextColor(ulColour,bgColour);
+            tft.println(file.name());
+          }
+          file = root.openNextFile();
+          fileNumber++;
       }
-    break;
+      
+      
+      //file.close();
+      
+      tft.unloadFont(); // Remove the font to recover memory used
+      
+    break; 
+    }
   }
-  drawn = 1;
+  drawn = 1; 
 }
-}
+
 

@@ -24,6 +24,7 @@ void menuChangeCheck()
     {
       case 1:
       menu = 0; //If on music screen and menu pressed go to homescreen
+      item = 0;
       drawn = 0;
       break;
     }
@@ -39,6 +40,7 @@ void menuChangeCheck()
       {
         case 0:
         menu = 1; //if select pressed on music item go to music menu
+        item = 0;
         drawn = 0;
         break;
         //Add more homescreen menus here
@@ -132,6 +134,7 @@ void itemIncrement()
     if(lastOn == -1) 
     {
       lastOn = currentInterpolatedSegment(); //Reset lastOn variable to prevent incrementing on first touch
+      drawn = 0;
     }
 
     if(currentInterpolatedSegment() == 8 && lastOn == 0) {item--; lastOn = currentInterpolatedSegment(); //Gigantic block of if statements to stop incrementing wrong way when crossing from segment 0-11
@@ -198,7 +201,7 @@ void itemIncrement()
   // Update last position for the next loop iteration
   
   if (item > maxItem) {
-    item = maxItem;
+    item = maxItem -1;
   }
 
   if (item < 0) {

@@ -5,6 +5,9 @@
 #include <SPI.h>
 #include <TFT_eSPI.h>  // Hardware-specific library
 #include "touch.h"
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
 
 
 #define bgColour 0x0000 //background colour
@@ -23,6 +26,8 @@
 #define misoPin 42       // Custom MISO pin
 #define mosiPin 36       // Custom MOSI pin
 #define sckPin 37        // Custom SCK pin
+
+
 
 extern TFT_eSPI tft;
 extern int item;
