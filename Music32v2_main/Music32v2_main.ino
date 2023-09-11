@@ -1,18 +1,16 @@
 #include "functions.h"
 #include "AAText.h"
 #include "audio.h"
-#include "ES8327.h"
-
 #define maxFileDisplay 10
 ES8327 codec(Wire,8,0x18);//wire object,hp_int, address
-//SPIClass spi = SPIClass(VSPI);
 
-bool sdFailed;
 
 File root;
 File file;
 int fileNumber;
 int selectedFileNumber;
+bool sdFailed;
+
 
 void setup() 
 {
@@ -46,7 +44,11 @@ void setup()
     while (1) {}
   }
   codec.setWordLength(16);
-  
+  rtc.begin();  //Initialize RTC module
+  rtc.setTime(20,37,0); // 24H mode, ex. 6:54:00
+  rtc.setDate(1,11,9,2023); // 0 for Sunday, ex. Saturday, 16.5.2020. setDate(weekday, day, month, yr);
+
+
   if(sdFailed == true)
   {
     tft.loadFont(AA_FONT_LARGE);
@@ -62,6 +64,7 @@ void loop()
   touchCalculationDegrees();
   itemIncrement();
   drawMenu(); 
+
 }
 
 
@@ -89,6 +92,7 @@ void drawMenu()
         }
       }
       tft.unloadFont(); // Remove the font to recover memory used
+      
     break;
     case 1:
       maxItem = maxFileDisplay;

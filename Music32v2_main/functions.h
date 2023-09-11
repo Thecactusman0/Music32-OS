@@ -8,7 +8,9 @@
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
-
+#include "ES8327.h"
+#include "PCF85063A-SOLDERED.h"
+#include "AAText.h"
 
 #define bgColour 0x0000 //background colour
 #define hlColour 0xFFFF //colour of highlighted/current selected item
@@ -30,6 +32,8 @@
 
 
 extern TFT_eSPI tft;
+extern PCF85063A rtc;
+extern TFT_eSprite spr;
 extern int item;
 extern int menu;
 extern int maxItem;
@@ -46,5 +50,6 @@ void drawSelectedText(int x, int y, char text[]);
 void itemIncrement();
 void buttonStateCheck();
 void menuChangeCheck();
+void drawTimeAndCharge();
 
 #endif

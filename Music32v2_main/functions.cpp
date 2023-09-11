@@ -15,6 +15,9 @@ bool refreshSelect;
 bool drawn;
 
 TFT_eSPI tft = TFT_eSPI();  // Invoke custom library
+PCF85063A rtc; 
+
+
 
 void menuChangeCheck()
 {
@@ -201,7 +204,7 @@ void itemIncrement()
   // Update last position for the next loop iteration
   
   if (item > maxItem) {
-    item = maxItem -1;
+    item = maxItem ;
   }
 
   if (item < 0) {
