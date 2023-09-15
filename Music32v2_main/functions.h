@@ -8,7 +8,8 @@
 #include "FS.h"
 #include "SD.h"
 #include "SPI.h"
-#include "ES8327.h"
+#include "audio.h"
+
 #include "PCF85063A-SOLDERED.h"
 #include "AAText.h"
 
@@ -29,11 +30,20 @@
 #define mosiPin 36       // Custom MOSI pin
 #define sckPin 37        // Custom SCK pin
 
-
+#define maxWords 10    // Maximum number of words
+#define maxWordLength 50 // Maximum length of each word
 
 extern TFT_eSPI tft;
 extern PCF85063A rtc;
 extern TFT_eSprite spr;
+extern Audio audio;
+extern fs::SDFS SD;
+extern ES8327 codec;
+
+extern int selectedFileIndex;
+extern int fileNumber;
+extern bool sdFailed;
+extern char words[maxWords][maxWordLength]; // Array to store words
 extern int item;
 extern int menu;
 extern int maxItem;

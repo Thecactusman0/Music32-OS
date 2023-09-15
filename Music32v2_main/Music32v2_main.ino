@@ -1,20 +1,27 @@
 #include "functions.h"
 #include "AAText.h"
-#include "audio.h"
+
 #define maxFileDisplay 10
-ES8327 codec(Wire,8,0x18);//wire object,hp_int, address
+
+
 
 
 File root;
 File file;
-int fileNumber;
-int selectedFileNumber;
-bool sdFailed;
 
+
+const char desiredCharacterSets[][maxWordLength] = { //desired file extensions that you want to sort for
+  ".mp3",   
+  ".m4a",   
+  ".wav"    
+};
+const int numSets = sizeof(desiredCharacterSets) / maxWordLength;
+const int max_display_chars = 24; // Maximum characters to display on the screen before scrolling
+int maxfiles;
 
 void setup() 
 {
-
+  //Serial.begin(115200);
   delay(100);
   calibrateClickwheel();
   previousTime = millis(); // Initialize the previous time
@@ -23,8 +30,8 @@ void setup()
   pinMode(RWButtonPin,INPUT);
   pinMode(PPButtonPin,INPUT);
   pinMode(selectButtonPin,INPUT);
-  pinMode(40,OUTPUT); //Set 25% brightness for filming
-  analogWrite(40,64);
+  pinMode(40,OUTPUT); 
+  analogWrite(20,64);
   
 
   SPI.begin(sckPin,misoPin,mosiPin);
@@ -37,16 +44,21 @@ void setup()
   tft.setRotation(0);
   tft.fillScreen(bgColour);
   tft.setCallback(bgColour); // Switch on color callback for anti-aliased fonts
-  
+  tft.setTextWrap(false);
+
   Wire.begin(15,16);
   if (!codec.begin()) 
   {
     while (1) {}
   }
   codec.setWordLength(16);
-  rtc.begin();  //Initialize RTC module
-  rtc.setTime(20,37,0); // 24H mode, ex. 6:54:00
-  rtc.setDate(1,11,9,2023); // 0 for Sunday, ex. Saturday, 16.5.2020. setDate(weekday, day, month, yr);
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT,I2S_DIN, I2S_MCLK);
+  audio.setVolume(5); // 0...21
+  //audio.connecttoFS(SD, "last.m4a");
+
+  //rtc.begin();  //Initialize RTC module
+  //rtc.setTime(20,37,0); // 24H mode, ex. 6:54:00
+  //rtc.setDate(1,11,9,2023); // 0 for Sunday, ex. Saturday, 16.5.2020. setDate(weekday, day, month, yr);
 
 
   if(sdFailed == true)
@@ -54,21 +66,96 @@ void setup()
     tft.loadFont(AA_FONT_LARGE);
     drawSelectedText(xMenuOrigin,10,"SD fail");
   }
- 
+ readSd();
+ delay(500);
 }
 
 void loop() 
 {
+
   buttonStateCheck();
   menuChangeCheck();
   touchCalculationDegrees();
   itemIncrement();
   drawMenu(); 
+  audio.loop();
+
+
+    //audio.connecttoFS(SD,words[selectedFileIndex]);
 
 }
 
 
+void readSd()
+{
+  root = SD.open("/");
+  file = root.openNextFile();
+  int i = 0;
+  while (i < maxWords)
+  {
 
+    if (!file)
+    {
+      maxfiles = i;
+      break;
+    }
+    const char* constFileName = file.name(); // Get the const char pointer
+    if(file.isDirectory())
+    {
+      // Check if the file name length is below the specified limit
+      if (strlen(constFileName)+1 <= maxWordLength)
+      {
+        strcpy(words[i], "/");
+        strcat(words[i], constFileName);
+        i++;
+      }
+    }
+    else if (containsDesiredCharacters(constFileName))
+    {
+      // Check if the file name length is below the specified limit
+      if (strlen(constFileName) <= maxWordLength)
+      {
+        strcpy(words[i], constFileName);
+        i++;
+      }
+    }
+    file = root.openNextFile();
+
+    
+  }
+  if(i == maxWords)
+  {
+    maxfiles = i;
+  }
+}
+
+
+
+bool containsDesiredCharacters(const char* word) {
+
+  if (word[0] == '.') { //filter out the words with start with .
+    return false;
+  }
+
+  for (int i = 0; i < numSets; i++) {
+    const char* desiredCharacters = desiredCharacterSets[i];
+    int charIndex = 0;
+
+    for (int j = 0; word[j] != '\0'; j++) {
+      if (word[j] == desiredCharacters[charIndex]) {
+        charIndex++;
+
+        // If the entire desired character set is found in order, accept the word
+        if (desiredCharacters[charIndex] == '\0') {
+          return true;
+        }
+      }
+    }
+  }
+
+  // If none of the specified character sets are found in the word, reject the word
+  return false;
+}
 
 void drawMenu() 
 {
@@ -79,6 +166,7 @@ void drawMenu()
     case 0:
       maxItem = 2;
       tft.loadFont(AA_FONT_LARGE);
+      
       //drawSelectedText(xMenuOrigin,yMenuOrigin+(textSeperation),menu0[1]);
       for(int i = 0; i <= maxItem; i++)
       {
@@ -95,32 +183,24 @@ void drawMenu()
       
     break;
     case 1:
-      maxItem = maxFileDisplay;
+      maxItem = maxfiles-1;
       tft.loadFont(AA_FONT_SMALL);
-      root = SD.open("/");
-      file = root.openNextFile();
-      tft.setTextColor(hlColour,bgColour);
+      tft.setCursor(0,0);
+      tft.println(maxItem);
       fileNumber = 0;
-      while(fileNumber < maxFileDisplay)
+      while(fileNumber < maxWords)
       {
-          if(!file)
-          {
-            maxItem = fileNumber;
-            break;
-          }
-
           tft.setCursor(xMenuOrigin,yMenuOrigin+(textSeperationSmall*fileNumber));
           if(fileNumber == item)
           {
             tft.setTextColor(hlColour,bgColour);
-            tft.println(file.name());
-            selectedFileNumber = fileNumber;
+            tft.println(words[fileNumber]);
+            selectedFileIndex = fileNumber;
           }else
           {
             tft.setTextColor(ulColour,bgColour);
-            tft.println(file.name());
+            tft.println(words[fileNumber]);
           }
-          file = root.openNextFile();
           fileNumber++;
       }
       

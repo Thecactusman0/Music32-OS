@@ -12,11 +12,22 @@ bool PPPressed;
 bool selectPressed;
 bool refreshMenu;
 bool refreshSelect;
+bool refreshFF;
+bool refreshRW;
+bool refreshPP;
 bool drawn;
+int fileNumber;
+bool sdFailed;
+int selectedFileIndex;
+int vol;
+
+char words[maxWords][maxWordLength]; // Array to store words
+
 
 TFT_eSPI tft = TFT_eSPI();  // Invoke custom library
 PCF85063A rtc; 
-
+Audio audio;
+ES8327 codec(Wire,8,0x18);//wire object,hp_int, address
 
 
 void menuChangeCheck()
@@ -76,24 +87,38 @@ void buttonStateCheck()
   {
     FFPressed = true;
     drawn = 0;
+    if(refreshFF == false)
+    {
+      vol++;
+      codec.setVolumeOut(vol);
+      refreshFF = true;
+
+    }
   }else
   {
     FFPressed = false;
+    refreshFF = false;
   }
 
   if(digitalRead(RWButtonPin) == 0)
   {
     RWPressed = true;
+   if(refreshRW == false)
+    {
+      vol--;
+      codec.setVolumeOut(vol);
+      refreshRW = true;
 
+    }
   }else
   {
     RWPressed = false;
+    refreshRW = false;
   }
 
   if(digitalRead(PPButtonPin) == 0)
   {
-    PPPressed = true;
-
+    PPPressed = true;  
   }else
   {
     PPPressed = false;
@@ -106,7 +131,9 @@ void buttonStateCheck()
     {
       drawn = 0;
       tft.fillScreen(bgColour);
+      
       refreshSelect = true;
+      
     }
   }else
   {
