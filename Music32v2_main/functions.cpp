@@ -16,13 +16,25 @@ bool refreshFF;
 bool refreshRW;
 bool refreshPP;
 bool drawn;
+bool startPlaying;
 int fileNumber;
 bool sdFailed;
 int selectedFileIndex;
 int vol;
-
+const char desiredCharacterSets[][maxWordLength] = { //desired file extensions that you want to sort for
+  ".mp3",   
+  ".m4a",   
+  ".wav"    
+};
+const int numSets = sizeof(desiredCharacterSets) / maxWordLength;
+const int max_display_chars = 24; // Maximum characters to display on the screen before scrolling
+int maxfiles;
 char words[maxWords][maxWordLength]; // Array to store words
 int maxWordsDisplayTakeOne = maxWordsDisplay - 1;
+int prevStartItem = 0;
+
+File root;
+File file;
 
 TFT_eSPI tft = TFT_eSPI();  // Invoke custom library
 PCF85063A rtc; 
@@ -30,41 +42,7 @@ Audio audio;
 ES8327 codec(Wire,8,0x18);//wire object,hp_int, address
 
 
-void menuChangeCheck()
-{
-  if(menuPressed && selectPressed == false)
-  {
-    switch(menu)
-    {
-      case 1:
-      menu = 0; //If on music screen and menu pressed go to homescreen
-      item = 0;
-      drawn = 0;
-      break;
-    }
-    
-  }
 
-  if(selectPressed && menuPressed == false)
-  {
-    switch(menu)
-    {
-      case 0:
-      switch(item)
-      {
-        case 0:
-        menu = 1; //if select pressed on music item go to music menu
-        item = 0;
-        drawn = 0;
-        break;
-        //Add more homescreen menus here
-      }
-      break;
-    }
-    
-  }
-
-}
 
 void buttonStateCheck()
 {
@@ -75,7 +53,24 @@ void buttonStateCheck()
     {
       tft.fillScreen(bgColour);
       refreshMenu = true;
+      //drawn = 0;
+      switch(menu)
+    {
+      case 1:
+      menu = 0; //If on music screen and menu pressed go to homescreen
+      item = 0;
       drawn = 0;
+      break;
+      case 2:
+      audio.stopSong();
+      delay(500);
+      tft.fillScreen(bgColour);
+      menu = 1; 
+      item = 0;
+      drawn = 0;
+      tft.fillScreen(bgColour);
+      break;
+    }
     }
   }else
   {
@@ -129,11 +124,29 @@ void buttonStateCheck()
     selectPressed = true;
     if(refreshSelect == false)
     {
-      drawn = 0;
+      //drawn = 0;
       tft.fillScreen(bgColour);
-      
       refreshSelect = true;
-      
+      switch(menu)
+    {
+      case 0:
+      switch(item)
+      {
+        case 0:
+        menu = 1; //if select pressed on music item go to music menu
+        item = 0;
+        drawn = 0;
+        break;
+        //Add more homescreen menus here
+      }
+      break;
+      case 1:
+      menu = 2; 
+      item = 0;
+      drawn = 0;
+      startPlaying = true;
+      break;
+    }
     }
   }else
   {
@@ -246,6 +259,76 @@ void itemIncrement()
   tft.print(lastOn);
   tft.setCursor(10,40);
   tft.print(degrees);*/
+}
+
+bool containsDesiredCharacters(const char* word) 
+{
+
+  if (word[0] == '.') { //filter out the words with start with .
+    return false;
+  }
+
+  for (int i = 0; i < numSets; i++) {
+    const char* desiredCharacters = desiredCharacterSets[i];
+    int charIndex = 0;
+
+    for (int j = 0; word[j] != '\0'; j++) {
+      if (word[j] == desiredCharacters[charIndex]) {
+        charIndex++;
+
+        // If the entire desired character set is found in order, accept the word
+        if (desiredCharacters[charIndex] == '\0') {
+          return true;
+        }
+      }
+    }
+  }
+
+  // If none of the specified character sets are found in the word, reject the word
+  return false;
+}
+
+void readSd()
+{
+  root = SD.open("/");
+  file = root.openNextFile();
+  int i = 0;
+  while (i < maxWords)
+  {
+
+    if (!file)
+    {
+      maxfiles = i;
+      break;
+    }
+    const char* constFileName = file.name(); // Get the const char pointer
+    if(file.isDirectory())
+    {
+      // Check if the file name length is below the specified limit
+      if (strlen(constFileName)+1 <= maxWordLength)
+      {
+        strcpy(words[i], "/");
+        strcat(words[i], constFileName);
+        i++;
+      }
+    }
+    else if (containsDesiredCharacters(constFileName))
+    {
+      // Check if the file name length is below the specified limit
+      if (strlen(constFileName) <= maxWordLength)
+      {
+        strcpy(words[i], constFileName);
+        i++;
+      }
+    }
+    file = root.openNextFile();
+
+    
+  }
+  if(i == maxWords)
+  {
+    maxfiles = i;
+  }
 }
 
 void drawSelectedText(int x, int y, char text[])

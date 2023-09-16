@@ -1,10 +1,11 @@
 #include "touch.h"
+#include "functions.h"
 
 long int initialReadings[numberOfSegments];
 long int previousReadings[numberOfSegments];
 long int currentReadings[numberOfSegments];
 float degrees;
-const double rateThreshold = 0.5; // Predetermined rate threshold
+const double rateThreshold = 0.1; // Predetermined rate threshold
 unsigned long previousTime;
 
 bool isDecreasingAboveRate(int currentValue, int previousValue, double rateThreshold, unsigned long deltaTime) 
@@ -75,6 +76,7 @@ void touchCalculationDegrees()
     { 
       if(isDecreasingAboveRate(currentReadings[largestIndex],previousReadings[largestIndex],rate,deltaTime) && isDecreasingAboveRate(currentReadings[secondLargestIndex],previousReadings[secondLargestIndex],rate,deltaTime))
       {
+        
         degrees = -1;
       }else
       {
@@ -118,6 +120,7 @@ void touchCalculationDegrees()
   }
   //Serial.print("Degrees: ");
   //Serial.println(degrees);
+
 }
 
 void calibrateClickwheel()// doesnt quite work yet

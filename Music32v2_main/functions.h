@@ -32,7 +32,7 @@
 
 #define maxWords 100    // Maximum number of words
 #define maxWordsDisplay 10 //max amount of words that can be displayed on screen, take one away
-#define maxWordLength 50 // Maximum length of each word
+#define maxWordLength 100 // Maximum length of each word
 
 extern TFT_eSPI tft;
 extern PCF85063A rtc;
@@ -40,6 +40,8 @@ extern TFT_eSprite spr;
 extern Audio audio;
 extern fs::SDFS SD;
 extern ES8327 codec;
+extern File root;
+extern File file;
 
 extern int maxWordsDisplayTakeOne;
 extern int selectedFileIndex;
@@ -57,11 +59,20 @@ extern bool RWPressed;
 extern bool PPPressed;
 extern bool selectPressed;
 extern bool drawn;
+extern const char desiredCharacterSets[][maxWordLength];
+extern const int numSets;
+extern const int max_display_chars; // Maximum characters to display on the screen before scrolling
+extern int maxfiles;
+extern int prevStartItem;
+extern bool startPlaying;
+
 void drawUnselectedText(int x, int y, char text[]);
 void drawSelectedText(int x, int y, char text[]);
 void itemIncrement();
 void buttonStateCheck();
 void menuChangeCheck();
 void drawTimeAndCharge();
+void readSd();
+bool containsDesiredCharacters(const char* word);
 
 #endif
