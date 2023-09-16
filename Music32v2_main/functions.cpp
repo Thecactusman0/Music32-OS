@@ -22,7 +22,7 @@ int selectedFileIndex;
 int vol;
 
 char words[maxWords][maxWordLength]; // Array to store words
-
+int maxWordsDisplayTakeOne = maxWordsDisplay - 1;
 
 TFT_eSPI tft = TFT_eSPI();  // Invoke custom library
 PCF85063A rtc; 

@@ -4,7 +4,7 @@
 #define maxFileDisplay 10
 
 
-
+int prevStartItem = 0;
 
 File root;
 File file;
@@ -183,30 +183,45 @@ void drawMenu()
       
     break;
     case 1:
-      maxItem = maxfiles-1;
-      tft.loadFont(AA_FONT_SMALL);
-      tft.setCursor(0,0);
-      tft.println(maxItem);
-      fileNumber = 0;
-      while(fileNumber < maxWords)
-      {
-          tft.setCursor(xMenuOrigin,yMenuOrigin+(textSeperationSmall*fileNumber));
-          if(fileNumber == item)
-          {
-            tft.setTextColor(hlColour,bgColour);
-            tft.println(words[fileNumber]);
-            selectedFileIndex = fileNumber;
-          }else
-          {
-            tft.setTextColor(ulColour,bgColour);
-            tft.println(words[fileNumber]);
-          }
-          fileNumber++;
-      }
-      
-      
-      //file.close();
-      
+
+maxItem = maxfiles - 1; // max amount of items that can be scrolled to
+tft.loadFont(AA_FONT_SMALL);
+fileNumber = 0; // value to increment to print all the file names
+
+
+int startItem = (item >= maxWordsDisplayTakeOne) ? item - maxWordsDisplayTakeOne : 0;
+
+
+while (fileNumber < maxWordsDisplay) // while we can still display it
+{
+ 
+    int currentFileIndex = startItem + fileNumber ; //the file that is currently being drawn
+    
+    
+    // Check if startItem has changed and clear the previous text if it has
+    if (startItem != prevStartItem) {
+      tft.fillScreen(TFT_BLACK);
+      prevStartItem = startItem;
+    }
+
+    tft.setCursor(xMenuOrigin, yMenuOrigin + (textSeperationSmall * fileNumber)); //set the cursor to a multiple of the file number we are drawing
+    if (currentFileIndex == item)
+    {
+        tft.setTextColor(hlColour, bgColour);
+        tft.println(words[currentFileIndex]);
+        selectedFileIndex = currentFileIndex;
+    }
+    else
+    {
+        tft.setTextColor(ulColour, bgColour);
+        tft.println(words[currentFileIndex]);
+    }
+
+
+
+    fileNumber++;
+}
+
       tft.unloadFont(); // Remove the font to recover memory used
       
     break; 

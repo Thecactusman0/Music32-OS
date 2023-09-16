@@ -30,7 +30,8 @@
 #define mosiPin 36       // Custom MOSI pin
 #define sckPin 37        // Custom SCK pin
 
-#define maxWords 10    // Maximum number of words
+#define maxWords 100    // Maximum number of words
+#define maxWordsDisplay 10 //max amount of words that can be displayed on screen, take one away
 #define maxWordLength 50 // Maximum length of each word
 
 extern TFT_eSPI tft;
@@ -40,6 +41,7 @@ extern Audio audio;
 extern fs::SDFS SD;
 extern ES8327 codec;
 
+extern int maxWordsDisplayTakeOne;
 extern int selectedFileIndex;
 extern int fileNumber;
 extern bool sdFailed;
