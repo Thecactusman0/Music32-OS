@@ -39,12 +39,13 @@ void setup()
   }
   codec.setWordLength(16);
   audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT,I2S_DIN, I2S_MCLK);
-  audio.setVolume(5); // 0...21
+  audio.setVolume(10); // 0...21
   //audio.connecttoFS(SD, "last.m4a");
 
-  //rtc.begin();  //Initialize RTC module
-  //rtc.setTime(20,37,0); // 24H mode, ex. 6:54:00
-  //rtc.setDate(1,11,9,2023); // 0 for Sunday, ex. Saturday, 16.5.2020. setDate(weekday, day, month, yr);
+  
+  rtc.begin();  //Initialize RTC module
+  rtc.setTime(20,37,0); // 24H mode, ex. 6:54:00
+  rtc.setDate(1,11,9,2023); // 0 for Sunday, ex. Saturday, 16.5.2020. setDate(weekday, day, month, yr);
 
 
   if(sdFailed == true)
@@ -97,6 +98,7 @@ void drawMenu0() {
       drawUnselectedText(xMenuOrigin, yMenuOrigin + (textSeperation * i), menu0[i]);
     }
   }
+  
   tft.unloadFont();
 }
 
