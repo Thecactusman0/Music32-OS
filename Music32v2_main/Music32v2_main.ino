@@ -40,7 +40,7 @@ void setup()
   codec.setWordLength(16);
   audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT,I2S_DIN, I2S_MCLK);
   audio.setVolume(10); // 0...21
-  //audio.connecttoFS(SD, "last.m4a");
+  codec.setVolumeOut(vol);
 
   
   rtc.begin();  //Initialize RTC module
@@ -98,7 +98,7 @@ void drawMenu0() {
       drawUnselectedText(xMenuOrigin, yMenuOrigin + (textSeperation * i), menu0[i]);
     }
   }
-  
+
   tft.unloadFont();
 }
 

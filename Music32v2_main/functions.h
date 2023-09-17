@@ -65,6 +65,7 @@ extern const int max_display_chars; // Maximum characters to display on the scre
 extern int maxfiles;
 extern int prevStartItem;
 extern bool startPlaying;
+extern int vol;
 
 void drawUnselectedText(int x, int y, char text[]);
 void drawSelectedText(int x, int y, char text[]);

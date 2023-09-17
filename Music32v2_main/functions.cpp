@@ -20,11 +20,13 @@ bool startPlaying;
 int fileNumber;
 bool sdFailed;
 int selectedFileIndex;
-int vol;
+int vol = -20;
 const char desiredCharacterSets[][maxWordLength] = { //desired file extensions that you want to sort for
   ".mp3",   
   ".m4a",   
-  ".wav"    
+  ".wav",
+  ".ogg",
+  ".flac"    
 };
 const int numSets = sizeof(desiredCharacterSets) / maxWordLength;
 const int max_display_chars = 24; // Maximum characters to display on the screen before scrolling
