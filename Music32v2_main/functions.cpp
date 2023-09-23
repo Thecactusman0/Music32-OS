@@ -5,7 +5,7 @@ int maxItem;
 int lastOn = 0;
 char menu0[3][10] = { "Music", "Link", "Settings" };
 
-bool menuPressed; //stop froms button being registered as pressed over and over when held
+bool menuPressed;  //stop froms button being registered as pressed over and over when held
 bool FFPressed;
 bool RWPressed;
 bool PPPressed;
@@ -21,142 +21,131 @@ int fileNumber;
 bool sdFailed;
 int selectedFileIndex;
 int vol = -20;
-const char desiredCharacterSets[][maxWordLength] = { //desired file extensions that you want to sort for
-  ".mp3",   
-  ".m4a",   
+const char desiredCharacterSets[][maxWordLength] = {  //desired file extensions that you want to sort for
+  ".mp3",
+  ".m4a",
   ".wav",
   ".ogg",
-  ".flac"    
+  ".flac"
 };
 const int numSets = sizeof(desiredCharacterSets) / maxWordLength;
-const int max_display_chars = 24; // Maximum characters to display on the screen before scrolling
+const int max_display_chars = 24;  // Maximum characters to display on the screen before scrolling
 int maxfiles;
-char words[maxWords][maxWordLength]; // Array to store words
+char words[maxWords][maxWordLength];  // Array to store words
 int maxWordsDisplayTakeOne = maxWordsDisplay - 1;
 int prevStartItem = 0;
+int prevItem;
+bool buzz;
+unsigned long prevBuzzMillis;
+int tcount = 0;
+int startIndex = 2;
 
 File root;
 File file;
 
-TFT_eSPI tft = TFT_eSPI();  // Invoke custom library
-PCF85063A rtc; 
+TFT_eSPI tft = TFT_eSPI();               // Invoke custom library
+TFT_eSprite stext = TFT_eSprite(&tft);   // Sprite object selected text
+TFT_eSprite ustext = TFT_eSprite(&tft);  // Sprite object unselected text
+TFT_eSprite graph = TFT_eSprite(&tft);   // Sprite object unselected text
+TFT_eSprite fb = TFT_eSprite(&tft);   // Sprite object unselected text
+
 Audio audio;
-ES8327 codec(Wire,8,0x18);//wire object,hp_int, address
+ES8327 codec(Wire, 8, 0x18);  //wire object,hp_int, address
 
 
 
 
-void buttonStateCheck()
-{
-  if(digitalRead(menuButtonPin) == 0)
-  {
+void buttonStateCheck() {
+  if (digitalRead(menuButtonPin) == 0) {
     menuPressed = true;
-    if(refreshMenu == false)
-    {
+    if (refreshMenu == false) {
       tft.fillScreen(bgColour);
       refreshMenu = true;
       //drawn = 0;
-      switch(menu)
-    {
-      case 1:
-      menu = 0; //If on music screen and menu pressed go to homescreen
-      item = 0;
-      drawn = 0;
-      break;
-      case 2:
-      audio.stopSong();
-      delay(500);
-      tft.fillScreen(bgColour);
-      menu = 1; 
-      item = 0;
-      drawn = 0;
-      tft.fillScreen(bgColour);
-      break;
+      switch (menu) {
+        case 1:
+          menu = 0;  //If on music screen and menu pressed go to homescreen
+          item = 0;
+          drawn = 0;
+          break;
+        case 2:
+          audio.stopSong();
+          delay(500);
+          tft.fillScreen(bgColour);
+          menu = 1;
+          item = 0;
+          drawn = 0;
+          tft.fillScreen(bgColour);
+          break;
+      }
     }
-    }
-  }else
-  {
+  } else {
     menuPressed = false;
     refreshMenu = false;
   }
-  
-  if(digitalRead(FFButtonPin) == 0)
-  {
+
+  if (digitalRead(FFButtonPin) == 0) {
     FFPressed = true;
     drawn = 0;
-    if(refreshFF == false)
-    {
+    if (refreshFF == false) {
       vol++;
       codec.setVolumeOut(vol);
       refreshFF = true;
-
     }
-  }else
-  {
+  } else {
     FFPressed = false;
     refreshFF = false;
   }
 
-  if(digitalRead(RWButtonPin) == 0)
-  {
+  if (digitalRead(RWButtonPin) == 0) {
     RWPressed = true;
-   if(refreshRW == false)
-    {
+    if (refreshRW == false) {
       vol--;
       codec.setVolumeOut(vol);
       refreshRW = true;
-
     }
-  }else
-  {
+  } else {
     RWPressed = false;
     refreshRW = false;
   }
 
-  if(digitalRead(PPButtonPin) == 0)
-  {
-    PPPressed = true;  
-  }else
-  {
+  if (digitalRead(PPButtonPin) == 0) {
+    PPPressed = true;
+  } else {
     PPPressed = false;
   }
 
-  if(digitalRead(selectButtonPin) == 0)
-  {
+  if (digitalRead(selectButtonPin) == 0) {
     selectPressed = true;
-    if(refreshSelect == false)
-    {
+    if (refreshSelect == false) {
       //drawn = 0;
       tft.fillScreen(bgColour);
       refreshSelect = true;
-      switch(menu)
-    {
-      case 0:
-      switch(item)
-      {
+      switch (menu) {
         case 0:
-        menu = 1; //if select pressed on music item go to music menu
-        item = 0;
-        drawn = 0;
-        break;
-        //Add more homescreen menus here
+          switch (item) {
+            case 0:
+              menu = 1;  //if select pressed on music item go to music menu
+              item = 0;
+              drawn = 0;
+              break;
+              //Add more homescreen menus here
+          }
+          break;
+        case 1:
+          menu = 2;
+          item = 0;
+          drawn = 0;
+          startPlaying = true;
+          break;
       }
-      break;
-      case 1:
-      menu = 2; 
-      item = 0;
-      drawn = 0;
-      startPlaying = true;
-      break;
     }
-    }
-  }else
-  {
+  } else {
     selectPressed = false;
     refreshSelect = false;
   }
-  
-  
+
+
   /*tft.setCursor(10,20);
   tft.print(menuPressed);
   tft.setCursor(10,40);
@@ -167,86 +156,178 @@ void buttonStateCheck()
   tft.print(PPPressed);
   tft.setCursor(30,40);
   tft.print(selectPressed);*/
-
-  
 }
 
-void itemIncrement()
-{
-  
-  if(currentInterpolatedSegment() != -1) //If touch wheel is pressed
+void itemChangeActions() {
+  if (item != prevItem) {
+    prevItem = item;
+    if (menu == 1 || menu == 0) {
+      buzz = true;
+      analogWrite(41, 200);
+      prevBuzzMillis = millis();
+    }
+    tcount = 0;
+  }
+  if (buzz) {
+    if (millis() > prevBuzzMillis + 15) {
+      buzz = false;
+      analogWrite(41, 0);
+    }
+  }
+}
+
+void itemIncrement() {
+
+  if (currentInterpolatedSegment() != -1)  //If touch wheel is pressed
   {
-    if(lastOn == -1) 
-    {
-      lastOn = currentInterpolatedSegment(); //Reset lastOn variable to prevent incrementing on first touch
+    if (lastOn == -1) {
+      lastOn = currentInterpolatedSegment();  //Reset lastOn variable to prevent incrementing on first touch
       drawn = 0;
     }
 
-    if(currentInterpolatedSegment() == 8 && lastOn == 0) {item--; lastOn = currentInterpolatedSegment(); //Gigantic block of if statements to stop incrementing wrong way when crossing from segment 0-11
-    }else if(currentInterpolatedSegment() == 8 && lastOn == 1) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 8 && lastOn == 2) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 8 && lastOn == 3) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 8 && lastOn == 4) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 9 && lastOn == 0) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 9 && lastOn == 1) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 9 && lastOn == 2) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 9 && lastOn == 3) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 9 && lastOn == 4) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 10 && lastOn == 0) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 10 && lastOn == 1) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 10 && lastOn == 2) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 10 && lastOn == 3) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 10 && lastOn == 4) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 11 && lastOn == 0) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 11 && lastOn == 1) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 11 && lastOn == 2) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 11 && lastOn == 3) {item--; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 11 && lastOn == 4) {item--; lastOn = currentInterpolatedSegment();
+    if (currentInterpolatedSegment() == 8 && lastOn == 0) {
+      item--;
+      lastOn = currentInterpolatedSegment();  //Gigantic block of if statements to stop incrementing wrong way when crossing from segment 0-11
+    } else if (currentInterpolatedSegment() == 8 && lastOn == 1) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 8 && lastOn == 2) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 8 && lastOn == 3) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 8 && lastOn == 4) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 9 && lastOn == 0) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 9 && lastOn == 1) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 9 && lastOn == 2) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 9 && lastOn == 3) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 9 && lastOn == 4) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 10 && lastOn == 0) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 10 && lastOn == 1) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 10 && lastOn == 2) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 10 && lastOn == 3) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 10 && lastOn == 4) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 11 && lastOn == 0) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 11 && lastOn == 1) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 11 && lastOn == 2) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 11 && lastOn == 3) {
+      item--;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 11 && lastOn == 4) {
+      item--;
+      lastOn = currentInterpolatedSegment();
 
-    }else if(currentInterpolatedSegment() == 0 && lastOn == 8) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 1 && lastOn == 8) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 2 && lastOn == 8) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 3 && lastOn == 8) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 4 && lastOn == 8) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 0 && lastOn == 9) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 1 && lastOn == 9) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 2 && lastOn == 9) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 3 && lastOn == 9) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 4 && lastOn == 9) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 0 && lastOn == 10) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 1 && lastOn == 10) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 2 && lastOn == 10) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 3 && lastOn == 10) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 4 && lastOn == 10) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 0 && lastOn == 11) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 1 && lastOn == 11) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 2 && lastOn == 11) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 3 && lastOn == 11) {item++; lastOn = currentInterpolatedSegment();
-    }else if(currentInterpolatedSegment() == 4 && lastOn == 11) {item++; lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 0 && lastOn == 8) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 1 && lastOn == 8) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 2 && lastOn == 8) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 3 && lastOn == 8) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 4 && lastOn == 8) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 0 && lastOn == 9) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 1 && lastOn == 9) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 2 && lastOn == 9) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 3 && lastOn == 9) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 4 && lastOn == 9) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 0 && lastOn == 10) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 1 && lastOn == 10) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 2 && lastOn == 10) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 3 && lastOn == 10) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 4 && lastOn == 10) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 0 && lastOn == 11) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 1 && lastOn == 11) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 2 && lastOn == 11) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 3 && lastOn == 11) {
+      item++;
+      lastOn = currentInterpolatedSegment();
+    } else if (currentInterpolatedSegment() == 4 && lastOn == 11) {
+      item++;
+      lastOn = currentInterpolatedSegment();
 
-    }else
-    {
-      if (currentInterpolatedSegment() > lastOn) //Clockwise
+    } else {
+      if (currentInterpolatedSegment() > lastOn)  //Clockwise
       {
         item++;
         lastOn = currentInterpolatedSegment();
         drawn = 0;
-      } else if (currentInterpolatedSegment() < lastOn) //Anticlockwise
+      } else if (currentInterpolatedSegment() < lastOn)  //Anticlockwise
       {
         item--;
         lastOn = currentInterpolatedSegment();
         drawn = 0;
       }
     }
-  }else
-  {
+  } else {
     lastOn = -1;
   }
 
   // Update last position for the next loop iteration
-  
+
   if (item > maxItem) {
-    item = maxItem ;
+    item = maxItem;
   }
 
   if (item < 0) {
@@ -263,10 +344,9 @@ void itemIncrement()
   tft.print(degrees);*/
 }
 
-bool containsDesiredCharacters(const char* word) 
-{
+bool containsDesiredCharacters(const char* word) {
 
-  if (word[0] == '.') { //filter out the words with start with .
+  if (word[0] == '.') {  //filter out the words with start with .
     return false;
   }
 
@@ -290,59 +370,58 @@ bool containsDesiredCharacters(const char* word)
   return false;
 }
 
-void readSd()
-{
+void readSd() {
   root = SD.open("/");
   file = root.openNextFile();
   int i = 0;
-  while (i < maxWords)
-  {
+  int fileIndex = 0;  // Variable to keep track of the file index
 
-    if (!file)
-    {
+  while (i < maxWords) {  // while the names can be stored
+
+    if (!file) {  // if not a file
       maxfiles = i;
       break;
     }
-    const char* constFileName = file.name(); // Get the const char pointer
-    if(file.isDirectory())
-    {
-      // Check if the file name length is below the specified limit
-      if (strlen(constFileName)+1 <= maxWordLength)
-      {
-        strcpy(words[i], "/");
-        strcat(words[i], constFileName);
-        i++;
-      }
-    }
-    else if (containsDesiredCharacters(constFileName))
-    {
-      // Check if the file name length is below the specified limit
-      if (strlen(constFileName) <= maxWordLength)
-      {
-        strcpy(words[i], constFileName);
-        i++;
-      }
-    }
-    file = root.openNextFile();
 
-    
+    const char* constFileName = file.name();  // Get the const char pointer
+
+    if (file.isDirectory()) {
+      // Check if the file name length is below the specified limit
+      if (strlen(constFileName) + 1 <= maxWordLength) {
+        if (fileIndex >= startIndex) {  // Check if fileIndex is equal to or greater than startIndex
+          strcpy(words[i], "/");
+          strcat(words[i], constFileName);
+          i++;
+        }
+        fileIndex++;  // Increment the file index for each directory
+      }
+    } else if (containsDesiredCharacters(constFileName)) {
+      // Check if the file name length is below the specified limit
+      if (strlen(constFileName) <= maxWordLength) {
+        if (fileIndex >= startIndex) {  // Check if fileIndex is equal to or greater than startIndex
+          strcpy(words[i], constFileName);
+          i++;
+        }
+        fileIndex++;  // Increment the file index for each file with desired characters
+      }
+    }
+
+    file = root.openNextFile();
   }
-  if(i == maxWords)
-  {
+
+  if (i == maxWords) {
     maxfiles = i;
   }
 }
 
-void drawSelectedText(int x, int y, char text[])
-{
-  tft.setTextColor(hlColour,bgColour);
-  tft.setCursor(x,y);
+void drawSelectedText(int x, int y, char text[]) {
+  tft.setTextColor(hlColour, bgColour);
+  tft.setCursor(x, y);
   tft.print(text);
 }
 
-void drawUnselectedText(int x, int y, char text[])
-{
-  tft.setTextColor(ulColour,bgColour);
-  tft.setCursor(x,y);
+void drawUnselectedText(int x, int y, char text[]) {
+  tft.setTextColor(ulColour, bgColour);
+  tft.setCursor(x, y);
   tft.print(text);
 }

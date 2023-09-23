@@ -3,88 +3,92 @@
 
 
 static unsigned long previousMillis = 0;
-const unsigned long interval = 1000; // 1000 milliseconds = 1 second
+const unsigned long interval = 1000;  // 1000 milliseconds = 1 second
 
-void setup() 
-{
+
+void setup() {
   //Serial.begin(115200);
   delay(100);
   calibrateClickwheel();
-  previousTime = millis(); // Initialize the previous time
-  pinMode(menuButtonPin,INPUT);
-  pinMode(FFButtonPin,INPUT);
-  pinMode(RWButtonPin,INPUT);
-  pinMode(PPButtonPin,INPUT);
-  pinMode(selectButtonPin,INPUT);
-  pinMode(40,OUTPUT); 
-  analogWrite(20,64);
-  
+  timeNow = millis();
+  pinMode(menuButtonPin, INPUT);
+  pinMode(FFButtonPin, INPUT);
+  pinMode(RWButtonPin, INPUT);
+  pinMode(PPButtonPin, INPUT);
+  pinMode(selectButtonPin, INPUT);
+  pinMode(40, OUTPUT);
+  analogWrite(20, 64);
 
-  SPI.begin(sckPin,misoPin,mosiPin);
-  if (!SD.begin(SDCSPin)) 
-  {
-  sdFailed = true;
+
+  SPI.begin(sckPin, misoPin, mosiPin);
+  if (!SD.begin(SDCSPin)) {
+    sdFailed = true;
   }
   delay(500);
   tft.init();
   tft.setRotation(0);
   tft.fillScreen(bgColour);
-  tft.setCallback(bgColour); // Switch on color callback for anti-aliased fonts
+  tft.setCallback(bgColour);  // Switch on color callback for anti-aliased fonts
   tft.setTextWrap(false);
 
-  Wire.begin(15,16);
-  if (!codec.begin()) 
-  {
+  stext.createSprite(800, 20);
+  stext.fillSprite(bgColour);
+  stext.setScrollRect(0, 0, 800, 20, bgColour);
+  stext.setTextWrap(false);
+
+  ustext.createSprite(220, 20);
+  ustext.fillSprite(bgColour);
+  ustext.setTextWrap(false);
+
+  graph.createSprite(30, 280);
+  graph.fillSprite(bgColour);
+
+  fb.createSprite(240, 320);
+
+  Wire.begin(15, 16);
+  if (!codec.begin()) {
     while (1) {}
   }
   codec.setWordLength(16);
-  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT,I2S_DIN, I2S_MCLK);
-  audio.setVolume(10); // 0...21
+  audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT, I2S_DIN, I2S_MCLK);
+  audio.setVolume(10);  // 0...21
   codec.setVolumeOut(vol);
 
-  
-  rtc.begin();  //Initialize RTC module
-  rtc.setTime(20,37,0); // 24H mode, ex. 6:54:00
-  rtc.setDate(1,11,9,2023); // 0 for Sunday, ex. Saturday, 16.5.2020. setDate(weekday, day, month, yr);
 
 
-  if(sdFailed == true)
-  {
+
+  if (sdFailed == true) {
     tft.loadFont(AA_FONT_LARGE);
-    drawSelectedText(xMenuOrigin,10,"SD fail");
+    drawSelectedText(xMenuOrigin, 10, "SD fail");
   }
- readSd();
- delay(500);
+  readSd();
+  delay(500);
 }
 
-void loop() 
-{
+void loop() {
 
   buttonStateCheck();
   touchCalculationDegrees();
   itemIncrement();
-  drawMenu(); 
+  itemChangeActions();
+  drawMenu();
   audio.loop();
-
-  
-  
-  
 }
 
 void drawMenu() {
   //if (drawn == 0) {
-    //drawn = 1;
-    switch (menu) {
-      case 0:
-        drawMenu0();
-        break;
-      case 1:
-        drawMenu1();
-        break;
-      case 2:
-        drawMenu2();
-        break;
-    }
+  //drawn = 1;
+  switch (menu) {
+    case 0:
+      drawMenu0();
+      break;
+    case 1:
+      drawMenu1();
+      break;
+    case 2:
+      drawMenu2();
+      break;
+  }
   //}
 }
 
@@ -98,13 +102,11 @@ void drawMenu0() {
       drawUnselectedText(xMenuOrigin, yMenuOrigin + (textSeperation * i), menu0[i]);
     }
   }
-
   tft.unloadFont();
 }
 
-void drawMenu1() 
-{
-  
+void drawMenu1() {
+
   maxItem = maxfiles - 1;
   tft.loadFont(AA_FONT_SMALL);
   fileNumber = 0;
@@ -112,32 +114,63 @@ void drawMenu1()
   while (fileNumber < maxWordsDisplay) {
     int currentFileIndex = startItem + fileNumber;
     if (startItem != prevStartItem) {
-      tft.fillRect(xMenuOrigin, yMenuOrigin,240,yMenuOrigin + (textSeperationSmall * maxWordsDisplay),bgColour);
+      //tft.fillRect(xMenuOrigin, yMenuOrigin,240,yMenuOrigin + (textSeperationSmall * maxWordsDisplay),bgColour);
       prevStartItem = startItem;
     }
-    tft.setCursor(xMenuOrigin, yMenuOrigin + (textSeperationSmall * fileNumber));
+
     if (currentFileIndex == item) {
-      tft.setTextColor(hlColour, bgColour);
-      tft.println(words[currentFileIndex]);
+
+      if (strlen(words[currentFileIndex]) > maxTextLength)  //if the text needs to scroll
+      {
+        stext.scroll(-1);  // scroll stext 1 pixel right, up/down default is 0
+        tcount--;
+        if (tcount <= 0) {
+          stext.setTextColor(hlColour, bgColour);
+          stext.loadFont(AA_FONT_SMALL);
+          stext.fillSprite(bgColour);
+          stext.setCursor(0, 0);
+          stext.print(words[currentFileIndex]);
+          stext.print("      ");
+          tcount = (stext.getCursorX() - (240 - xMenuOrigin)) + 30;  //by using the cursor position you know where the text ends, even with different fonts. with this find how far the text should scroll
+        }
+      } else {
+        stext.loadFont(AA_FONT_SMALL);
+        stext.fillSprite(bgColour);
+        stext.setCursor(0,0);
+        stext.print(words[currentFileIndex]);
+      }
+      //stext.pushSprite(xMenuOrigin, yMenuOrigin + (textSeperationSmall * fileNumber));
+
+      stext.pushToSprite(&fb,xMenuOrigin, yMenuOrigin + (textSeperationSmall * fileNumber));
       selectedFileIndex = currentFileIndex;
     } else {
-      tft.setTextColor(ulColour, bgColour);
-      tft.println(words[currentFileIndex]);
+      ustext.setTextColor(ulColour, bgColour);
+      ustext.loadFont(AA_FONT_SMALL);
+      ustext.fillSprite(bgColour);
+      ustext.setCursor(0,0);
+      ustext.print(words[currentFileIndex]);
+      //ustext.pushSprite(xMenuOrigin, yMenuOrigin + (textSeperationSmall * fileNumber));
+
+      ustext.pushToSprite(&fb,xMenuOrigin, yMenuOrigin + (textSeperationSmall * fileNumber));
     }
     fileNumber++;
   }
+  graph.fillSprite(bgColour);
+  graph.drawFastVLine(10,0,250,hlColour);
+  int gy = map(item,0,maxItem,0,190);
+  graph.fillSmoothRoundRect(5,gy,10,60,3,hlColour);
+  graph.pushToSprite(&fb,210, 40);
+  fb.pushSprite(0, 0);
   tft.unloadFont();
 }
 
-void drawMenu2() 
-{
+void drawMenu2() {
   unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) 
-  {
+  if (currentMillis - previousMillis >= interval) {
     int currentTime = audio.getAudioCurrentTime();
     tft.loadFont(AA_FONT_SMALL);
-    tft.fillRect(20,280,220,20,bgColour);
-    tft.fillRect(20,280,220,20,bgColour);
+    tft.fillRect(20, 280, 220, 20, bgColour);
+    tft.fillRect(20, 280, 220, 20, bgColour);
     tft.setTextColor(hlColour, bgColour);
     char formatted[8];
     formatTime(audio.getAudioFileDuration(), formatted);
@@ -152,30 +185,21 @@ void drawMenu2()
     previousMillis = currentMillis;
   }
 
-  if(startPlaying == true)
-  {
-    audio.connecttoFS(SD,words[selectedFileIndex]);
+  if (startPlaying == true) {
+    audio.connecttoFS(SD, words[selectedFileIndex]);
     startPlaying = false;
   }
-
-  
-  
 }
 
-void clearScreen() 
-{
-  tft.fillScreen(bgColour);
-}
 
-void formatTime(int seconds, char* formattedTime) 
-{
-    int hours = seconds / 3600;
-    int minutes = (seconds / 60) % 60;
-    seconds %= 60;
-    
-    if (hours > 0) {
-        snprintf(formattedTime, 8, "%02d:%02d:%02d", hours, minutes, seconds);
-    } else {
-        snprintf(formattedTime, 8, "%02d:%02d", minutes, seconds);
-    }
+void formatTime(int seconds, char *formattedTime) {
+  int hours = seconds / 3600;
+  int minutes = (seconds / 60) % 60;
+  seconds %= 60;
+
+  if (hours > 0) {
+    snprintf(formattedTime, 8, "%02d:%02d:%02d", hours, minutes, seconds);
+  } else {
+    snprintf(formattedTime, 8, "%02d:%02d", minutes, seconds);
+  }
 }

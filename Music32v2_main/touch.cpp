@@ -5,8 +5,7 @@ long int initialReadings[numberOfSegments];
 long int previousReadings[numberOfSegments];
 long int currentReadings[numberOfSegments];
 float degrees;
-const double rateThreshold = 0.1; // Predetermined rate threshold
-unsigned long previousTime;
+unsigned long timeNow;
 
 bool isDecreasingAboveRate(int currentValue, int previousValue, double rateThreshold, unsigned long deltaTime) 
 {
@@ -39,10 +38,7 @@ void touchCalculationDegrees()
 {
   int largestIndex = -1;
   int secondLargestIndex = -1;
-  unsigned long currentTime = millis();
-  unsigned long timeNow;
-  unsigned long deltaTime = currentTime - previousTime;
-    
+  
   if(millis()  >= timeNow + touchDelay)
   {
     timeNow += touchDelay;
@@ -70,16 +66,11 @@ void touchCalculationDegrees()
     if (secondLargestIndex == -1 && largestIndex != -1) //only one value
     {
       degrees = largestIndex * 60.0;
-      degrees = applyOffset(degrees,-20);
+      degrees = applyOffset(degrees,offsetDegrees);
     
     }else if (largestIndex != -1 && secondLargestIndex != -1)
     { 
-      if(isDecreasingAboveRate(currentReadings[largestIndex],previousReadings[largestIndex],rate,deltaTime) && isDecreasingAboveRate(currentReadings[secondLargestIndex],previousReadings[secondLargestIndex],rate,deltaTime))
-      {
-        
-        degrees = -1;
-      }else
-      {
+
         int sum = currentReadings[largestIndex]+currentReadings[secondLargestIndex];
         sum = sum/1000;
         int sum2 = currentReadings[largestIndex]/1000;
@@ -106,16 +97,11 @@ void touchCalculationDegrees()
         {
           degrees = degrees + 300; 
         }
-          degrees = applyOffset(degrees,-20);
-      }  
+          degrees = applyOffset(degrees,offsetDegrees);
+       
     }else
     {
       degrees = -1;
-    }
-    
-    for (int i = 0; i < numberOfSegments; i++) 
-    {
-      previousReadings[i] = currentReadings[i];
     }
   }
   //Serial.print("Degrees: ");

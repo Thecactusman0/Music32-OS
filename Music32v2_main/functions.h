@@ -9,8 +9,6 @@
 #include "SD.h"
 #include "SPI.h"
 #include "audio.h"
-
-#include "PCF85063A-SOLDERED.h"
 #include "AAText.h"
 
 #define bgColour 0x0000 //background colour
@@ -19,7 +17,7 @@
 #define textSeperation 40
 #define textSeperationSmall 20
 #define xMenuOrigin 20
-#define yMenuOrigin 80
+#define yMenuOrigin 40
 #define menuButtonPin 0
 #define FFButtonPin 5
 #define RWButtonPin 3
@@ -31,12 +29,15 @@
 #define sckPin 37        // Custom SCK pin
 
 #define maxWords 100    // Maximum number of words
-#define maxWordsDisplay 10 //max amount of words that can be displayed on screen, take one away
+#define maxWordsDisplay 13 //max amount of words that can be displayed on screen
 #define maxWordLength 100 // Maximum length of each word
+#define maxTextLength 32
 
 extern TFT_eSPI tft;
-extern PCF85063A rtc;
-extern TFT_eSprite spr;
+extern TFT_eSprite stext;
+extern TFT_eSprite ustext;
+extern TFT_eSprite graph;
+extern TFT_eSprite fb;
 extern Audio audio;
 extern fs::SDFS SD;
 extern ES8327 codec;
@@ -66,14 +67,17 @@ extern int maxfiles;
 extern int prevStartItem;
 extern bool startPlaying;
 extern int vol;
+extern bool buzz;
+extern int tcount;
+extern int startIndex;
 
 void drawUnselectedText(int x, int y, char text[]);
 void drawSelectedText(int x, int y, char text[]);
 void itemIncrement();
 void buttonStateCheck();
 void menuChangeCheck();
-void drawTimeAndCharge();
 void readSd();
 bool containsDesiredCharacters(const char* word);
+void itemChangeActions();
 
 #endif
