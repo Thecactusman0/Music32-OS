@@ -70,6 +70,7 @@ extern int vol;
 extern bool buzz;
 extern int tcount;
 extern int startIndex;
+extern char currentDir[50];
 
 void drawUnselectedText(int x, int y, char text[]);
 void drawSelectedText(int x, int y, char text[]);

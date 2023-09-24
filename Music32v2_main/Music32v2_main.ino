@@ -3,8 +3,8 @@
 
 
 static unsigned long previousMillis = 0;
-const unsigned long interval = 1000;  // 1000 milliseconds = 1 second
-
+const unsigned long interval = 100;  // 1000 milliseconds = 1 second
+float percentDone;
 
 void setup() {
   //Serial.begin(115200);
@@ -44,6 +44,8 @@ void setup() {
   graph.fillSprite(bgColour);
 
   fb.createSprite(240, 320);
+  fb.fillSprite(bgColour);
+  fb.setTextWrap(false);
 
   Wire.begin(15, 16);
   if (!codec.begin()) {
@@ -51,17 +53,14 @@ void setup() {
   }
   codec.setWordLength(16);
   audio.setPinout(I2S_BCLK, I2S_LRC, I2S_DOUT, I2S_DIN, I2S_MCLK);
-  audio.setVolume(10);  // 0...21
+  audio.setVolume(13);  // 0...21
   codec.setVolumeOut(vol);
-
-
-
 
   if (sdFailed == true) {
     tft.loadFont(AA_FONT_LARGE);
     drawSelectedText(xMenuOrigin, 10, "SD fail");
   }
-  readSd();
+  
   delay(500);
 }
 
@@ -94,7 +93,8 @@ void drawMenu() {
 
 void drawMenu0() {
   maxItem = 2;
-  tft.loadFont(AA_FONT_LARGE);
+  fb.loadFont(AA_FONT_LARGE);
+  fb.fillSprite(bgColour);
   for (int i = 0; i <= maxItem; i++) {
     if (i == item) {
       drawSelectedText(xMenuOrigin, yMenuOrigin + (textSeperation * i), menu0[i]);
@@ -102,13 +102,15 @@ void drawMenu0() {
       drawUnselectedText(xMenuOrigin, yMenuOrigin + (textSeperation * i), menu0[i]);
     }
   }
-  tft.unloadFont();
+  fb.pushSprite(0, 0);
+  fb.unloadFont();
 }
 
 void drawMenu1() {
 
   maxItem = maxfiles - 1;
   tft.loadFont(AA_FONT_SMALL);
+  fb.fillSprite(bgColour);
   fileNumber = 0;
   int startItem = (item >= maxWordsDisplayTakeOne) ? item - maxWordsDisplayTakeOne : 0;
   while (fileNumber < maxWordsDisplay) {
@@ -165,30 +167,53 @@ void drawMenu1() {
 }
 
 void drawMenu2() {
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
-    int currentTime = audio.getAudioCurrentTime();
-    tft.loadFont(AA_FONT_SMALL);
-    tft.fillRect(20, 280, 220, 20, bgColour);
-    tft.fillRect(20, 280, 220, 20, bgColour);
-    tft.setTextColor(hlColour, bgColour);
-    char formatted[8];
-    formatTime(audio.getAudioFileDuration(), formatted);
-    tft.setCursor(160, 280);
-    tft.print(formatted);
-    formatTime(currentTime, formatted);
-    tft.setCursor(20, 280);
-    tft.print(formatted);
-    tft.setCursor(5, 260);
-    tft.print(words[selectedFileIndex]);
-    tft.unloadFont();
-    previousMillis = currentMillis;
-  }
 
   if (startPlaying == true) {
     audio.connecttoFS(SD, words[selectedFileIndex]);
     startPlaying = false;
+    codec.setVolumeOut(vol);
   }
+  
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= interval) {
+    int currentTime = audio.getAudioCurrentTime();
+    int totalTime = audio.getAudioFileDuration();
+    fb.loadFont(AA_FONT_SMALL);
+    fb.fillSprite(bgColour);
+    fb.setTextColor(hlColour, bgColour);
+    char formatted[8];
+    formatTime(totalTime, formatted);
+    fb.setCursor(160, 280);
+    fb.print(formatted);
+    formatTime(currentTime, formatted);
+    fb.setCursor(20, 280);
+    fb.print(formatted);
+    fb.setCursor(5, 260);
+    fb.print(words[selectedFileIndex]);
+
+    
+
+    if(totalTime != 0)
+    {
+      percentDone = 100 * currentTime/totalTime;
+    }
+    
+    fb.fillRect(80,220,percentDone,20,hlColour);
+
+    fb.drawLine(80,220,180,220,hlColour);
+    fb.drawLine(80,240,180,240,hlColour);
+    fb.drawLine(80,220,80,240,hlColour);
+    fb.drawLine(180,220,180,240,hlColour);
+
+    fb.pushSprite(0, 0);
+    fb.pushSprite(0, 0);
+    fb.unloadFont();
+    previousMillis = currentMillis;   
+  }
+  
+  
+
+  
 }
 
 

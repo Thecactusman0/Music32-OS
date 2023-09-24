@@ -20,7 +20,7 @@ bool startPlaying;
 int fileNumber;
 bool sdFailed;
 int selectedFileIndex;
-int vol = -20;
+int vol = -30;
 const char desiredCharacterSets[][maxWordLength] = {  //desired file extensions that you want to sort for
   ".mp3",
   ".m4a",
@@ -39,7 +39,9 @@ bool buzz;
 unsigned long prevBuzzMillis;
 int tcount = 0;
 int startIndex = 2;
-
+char currentDir[50] = "/";
+int prevTotalTime;
+int prevCurrentTime;
 File root;
 File file;
 
@@ -59,7 +61,7 @@ void buttonStateCheck() {
   if (digitalRead(menuButtonPin) == 0) {
     menuPressed = true;
     if (refreshMenu == false) {
-      tft.fillScreen(bgColour);
+      //tft.fillScreen(bgColour);
       refreshMenu = true;
       //drawn = 0;
       switch (menu) {
@@ -71,11 +73,11 @@ void buttonStateCheck() {
         case 2:
           audio.stopSong();
           delay(500);
-          tft.fillScreen(bgColour);
+          //tft.fillScreen(bgColour);
           menu = 1;
           item = 0;
           drawn = 0;
-          tft.fillScreen(bgColour);
+          //tft.fillScreen(bgColour);
           break;
       }
     }
@@ -119,12 +121,13 @@ void buttonStateCheck() {
     selectPressed = true;
     if (refreshSelect == false) {
       //drawn = 0;
-      tft.fillScreen(bgColour);
+      //tft.fillScreen(bgColour);
       refreshSelect = true;
       switch (menu) {
         case 0:
           switch (item) {
             case 0:
+              readSd();
               menu = 1;  //if select pressed on music item go to music menu
               item = 0;
               drawn = 0;
@@ -371,7 +374,7 @@ bool containsDesiredCharacters(const char* word) {
 }
 
 void readSd() {
-  root = SD.open("/");
+  root = SD.open(currentDir);
   file = root.openNextFile();
   int i = 0;
   int fileIndex = 0;  // Variable to keep track of the file index
@@ -415,13 +418,13 @@ void readSd() {
 }
 
 void drawSelectedText(int x, int y, char text[]) {
-  tft.setTextColor(hlColour, bgColour);
-  tft.setCursor(x, y);
-  tft.print(text);
+  fb.setTextColor(hlColour, bgColour);
+  fb.setCursor(x, y);
+  fb.print(text);
 }
 
 void drawUnselectedText(int x, int y, char text[]) {
-  tft.setTextColor(ulColour, bgColour);
-  tft.setCursor(x, y);
-  tft.print(text);
+  fb.setTextColor(ulColour, bgColour);
+  fb.setCursor(x, y);
+  fb.print(text);
 }
