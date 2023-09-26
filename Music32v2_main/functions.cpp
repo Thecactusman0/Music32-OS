@@ -172,7 +172,7 @@ void itemChangeActions() {
     tcount = 0;
   }
   if (buzz) {
-    if (millis() > prevBuzzMillis + 15) {
+    if (millis() > prevBuzzMillis + 5) {
       buzz = false;
       analogWrite(41, 0);
     }

@@ -109,7 +109,7 @@ void drawMenu0() {
 void drawMenu1() {
 
   maxItem = maxfiles - 1;
-  tft.loadFont(AA_FONT_SMALL);
+  fb.loadFont(AA_FONT_SMALL);
   fb.fillSprite(bgColour);
   fileNumber = 0;
   int startItem = (item >= maxWordsDisplayTakeOne) ? item - maxWordsDisplayTakeOne : 0;
@@ -162,6 +162,10 @@ void drawMenu1() {
   int gy = map(item,0,maxItem,0,190);
   graph.fillSmoothRoundRect(5,gy,10,60,3,hlColour);
   graph.pushToSprite(&fb,210, 40);
+  fb.setTextColor(hlColour, bgColour);
+  fb.setCursor(xMenuOrigin,5);
+  fb.print("Music");
+  fb.drawLine(xMenuOrigin,30,220,30, hlColour);
   fb.pushSprite(0, 0);
   tft.unloadFont();
 }
@@ -175,7 +179,8 @@ void drawMenu2() {
   }
   
   unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= interval) {
+  if (currentMillis - previousMillis >= interval) 
+  {
     int currentTime = audio.getAudioCurrentTime();
     int totalTime = audio.getAudioFileDuration();
     fb.loadFont(AA_FONT_SMALL);
@@ -183,28 +188,28 @@ void drawMenu2() {
     fb.setTextColor(hlColour, bgColour);
     char formatted[8];
     formatTime(totalTime, formatted);
-    fb.setCursor(160, 280);
+    fb.setCursor(180, 255);
     fb.print(formatted);
     formatTime(currentTime, formatted);
-    fb.setCursor(20, 280);
+    fb.setCursor(20, 255);
     fb.print(formatted);
-    fb.setCursor(5, 260);
+
+    fb.setCursor(5, 280);
     fb.print(words[selectedFileIndex]);
+    
 
     
 
     if(totalTime != 0)
     {
       percentDone = 100 * currentTime/totalTime;
+      percentDone = map(percentDone,0,100,0,190);
     }
+    fb.fillSmoothRoundRect(20,230,200,10,5,ulColour);
+    fb.fillSmoothCircle(percentDone + 25, 235,10,hlColour);
+
+
     
-    fb.fillRect(80,220,percentDone,20,hlColour);
-
-    fb.drawLine(80,220,180,220,hlColour);
-    fb.drawLine(80,240,180,240,hlColour);
-    fb.drawLine(80,220,80,240,hlColour);
-    fb.drawLine(180,220,180,240,hlColour);
-
     fb.pushSprite(0, 0);
     fb.pushSprite(0, 0);
     fb.unloadFont();
